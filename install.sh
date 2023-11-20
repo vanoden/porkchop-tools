@@ -7,7 +7,7 @@
 ###########################################
 
 # Paths
-SOURCE=~/.deploy
+SOURCE=/export/deploy
 TARGET=/home/chef
 
 # Validation
@@ -26,18 +26,27 @@ if [ ! -d "$TARGET" ]; then
 	exit 1
 fi
 
-# Install Chef Client Config
-sudo cp -f $SOURCE/chef/client.rb /etc/chef/
-
-# Install Chef Keys
-sudo cp $SOURCE/keys/id_* $TARGET/.ssh/
-
-# Install Chef Files
-for folder in tools cookbooks environments roles data_bags
+# Fetch Cookbooks and Roles
+for REPO in cookbooks roles
 do
-	if [ -d "$TARGET/$folder" ]; then
-		sudo mkdir -p $TARGET/$folder
+	if [ -d "$TARGET/$REPO/.git" ]
+then
+	cd "$TARGET/$REPO"
+	git pull
+	cd -
+else
+	git clone https://github.com/vanoden/porkchop-$REPO $TARGET/$REPO
+fi
 
-		sudo /usr/bin/rsync -av $SOURCE/$folder/ $TARGET/$folder/
-	fi
-done
+# Install Chef Client Config
+cp -f $SOURCE/client.rb /etc/chef/
+
+# Install Chef Environment
+mkdir -p $TARGET/environments
+cp -f $SOURCE/environments/environment.rb $TARGET/environments
+
+# Install Chef Data Bags
+if [ ! -d "$TARGET/databags" ]; then
+	mkdir -p $TARGET/data_bags
+fi
+/usr/bin/rsync -av $SOURCE/databags/ $TARGET/databags/

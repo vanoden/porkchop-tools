@@ -17,9 +17,9 @@ if [ -z "$ACCOUNT" ]; then
 fi
 
 # Paths
-HOME=~/aws-chef
-FILES=$HOME/environments/$ENVIRONMENT
-REMOTE=/home/${ACCOUNT}/.deploy
+LOCAL=~/aws-chef
+REMOTE=/export/deploy
+FILES=$LOCAL/$ENVIRONMENT
 
 # Validate Environment
 if [ -z "$HOST" ]; then
@@ -32,8 +32,8 @@ if [ -z "$ENVIRONMENT" ]; then
 	exit 1
 fi
 
-if [ ! -d $HOME ]; then
-	echo "Files Home $HOME not found"
+if [ ! -d $LOCAL ]; then
+	echo "Files Home $LOCAL not found"
 	exit 1
 fi
 
@@ -44,9 +44,9 @@ fi
 
 # Create TMP dir on Remote Server
 echo "Creating remote directory $REMOTE on $HOST"
-/usr/bin/ssh $HOST mkdir -p $REMOTE
+/usr/bin/ssh $HOST "if [ ! -d \"$REMOTE\" ]; then mkdir -p \"$REMOTE\"; fi;"
 
 # Upload files
 echo "Uploading files from $FILES to $REMOTE"
-/usr/bin/rsync -ave ssh --include=tools/ --include=tools/* --exclude=* $HOME/ $HOST:$REMOTE/
+/usr/bin/ssh $HOST "if [ -d \"$REMOTE/tools/.git\" ]; then cd $REMOTE/tools; git pull; else git clone https://github.com/vanoden/porkchop-tools $REMOTE/tools; fi"
 /usr/bin/rsync -ave ssh $FILES/ $HOST:$REMOTE/
