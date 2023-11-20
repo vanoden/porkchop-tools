@@ -30,13 +30,14 @@ fi
 for REPO in cookbooks roles
 do
 	if [ -d "$TARGET/$REPO/.git" ]
-then
-	cd "$TARGET/$REPO"
-	git pull
-	cd -
-else
-	git clone https://github.com/vanoden/porkchop-$REPO $TARGET/$REPO
-fi
+	then
+		cd "$TARGET/$REPO"
+		git pull
+		cd -
+	else
+		git clone https://github.com/vanoden/porkchop-$REPO $TARGET/$REPO
+	fi
+done
 
 # Install Chef Client Config
 cp -f $SOURCE/client.rb /etc/chef/
