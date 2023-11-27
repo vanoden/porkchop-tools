@@ -9,16 +9,18 @@
 # Command Line Params
 HOST=$1
 ENVIRONMENT=$2
-ACCOUNT=$3
+#ACCOUNT=$3
 
 # Allow User to Specify Remote Account for destination path
-if [ -z "$ACCOUNT" ]; then
-	ACCOUNT=$USER
-fi
+#if [ -z "$ACCOUNT" ]; then
+#	ACCOUNT=$USER
+#fi
+
+ACCOUNT=ec2-user
 
 # Paths
 LOCAL=~/aws-chef
-REMOTE=/export/deploy
+REMOTE=/etc/chef
 FILES=$LOCAL/$ENVIRONMENT
 
 # Validate Environment
@@ -44,9 +46,14 @@ fi
 
 # Create TMP dir on Remote Server
 echo "Creating remote directory $REMOTE on $HOST"
-/usr/bin/ssh $HOST "if [ ! -d \"$REMOTE\" ]; then mkdir -p \"$REMOTE\"; fi;"
+ENVIRONMENTS=$REMOTE/environments
+ROLES=$REMOTE/roles
+DATABAGS=$REMOTE/data_bags
+COOKBOOKS=$REMOTE/cookbooks
+/usr/bin/ssh $HOST "sudo mkdir -p \"$ENVIRONMENTS\" \"$ROLES\" \"$DATABAGS\" \"$COOKBOOKS\"; sudo sudo chown -R ec2-user \"$ENVIRONMENTS\" \"$ROLES\" \"$DATABAGS\" \"$COOKBOOKS\""
 
 # Upload files
 echo "Uploading files from $FILES to $REMOTE"
-/usr/bin/ssh $HOST "if [ -d \"$REMOTE/tools/.git\" ]; then cd $REMOTE/tools; git pull; else git clone https://github.com/vanoden/porkchop-tools $REMOTE/tools; fi"
+#/usr/bin/ssh $HOST "if [ -d \"$REMOTE/tools/.git\" ]; then cd $REMOTE/tools; git pull; else git clone https://github.com/vanoden/porkchop-tools $REMOTE/tools; fi"
+/usr/bin/rsync -ave ssh tools/chef_tool.sh $HOST:/home/ec2-user/
 /usr/bin/rsync -ave ssh $FILES/ $HOST:$REMOTE/
