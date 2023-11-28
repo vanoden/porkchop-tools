@@ -114,7 +114,10 @@ function update_client() {
 }
 
 function update_environment() {
-	result=`/usr/bin/aws s3 cp s3:/$BUCKET/$ENVIRONMENT.json $ENVIRONMENTS_PATH/`
+	SOURCE="s3:/${BUCKET}/${ENVIRONMENT}.json"
+	TARGET="${ENVIRONMENTS_PATH}/"
+	echo "Copying $SOURCE to $TARGET"
+	result=`/usr/bin/aws s3 cp $SOURCE $TARGET`
 }
 
 if [ "$UPDATE" == "cookbooks" ]; then
