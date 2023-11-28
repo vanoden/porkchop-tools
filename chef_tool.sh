@@ -114,7 +114,7 @@ function update_client() {
 }
 
 function update_environment() {
-	SOURCE="s3:/${BUCKET}/${ENVIRONMENT}.json"
+	SOURCE="s3://${BUCKET}/${ENVIRONMENT}.json"
 	TARGET="${ENVIRONMENTS_PATH}/"
 	echo "Copying $SOURCE to $TARGET"
 	result=`/usr/bin/aws s3 cp $SOURCE $TARGET`
