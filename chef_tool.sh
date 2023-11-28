@@ -7,10 +7,10 @@ if [ ! -z "$1" ]; then
 	PARAM_1=$1
 	PARAM_2=$2
 
-	if `echo $PARAM_1|grep -q -E ^[a-z0-9\\\-_]+\:\:[a-z0-9\\\-_]+$`; then
+	if `echo $PARAM_1|/usr/bin/grep -q -E ^[a-z0-9\\\-_]+\:\:[a-z0-9\\\-_]+$`; then
 		RECIPE=$PARAM_1
-	elif [ "$PARAM_1" -eq "update" ]; then
-		if `echo $PARAM_2|grep -q -E ^(cookbooks|roles|config|all)$`; then
+	elif [ "$PARAM_1" == "update" ]; then
+		if `echo $PARAM_2|/usr/bin/grep -q -E "^(cookbooks|roles|environment|client|all)$"`; then
 			UPDATE=$PARAM_2
 		else
 			echo "Unrecognized key for update"
@@ -59,11 +59,7 @@ if echo $ROLE | grep "404" > /dev/null; then
 	exit 1;
 fi
 
-# Make sure the environment file is present
-if [ ! -e "${ENVIRONMENTS_PATH}/${ENVIRONMENT}.json" ]; then
-	echo "Environment file ${ENVIRONMENTS_PATH}/${ENVIRONMENT}.json not found";
-	exit 1;
-fi
+BUCKET="${ENVIRONMENT}-deploy"
 
 # Update Cookbooks
 function update_cookbooks() {
@@ -104,7 +100,7 @@ function update_roles() {
 }
 
 # Write Chef Client Config
-function update_config() {
+function update_client() {
 	cat <<- EOF > /etc/chef/client.rb
 		cookbook_path		'$COOKBOOKS_PATH'
 		role_path			'$ROLES_PATH'
@@ -117,21 +113,34 @@ function update_config() {
 	EOF
 }
 
+function update_environment() {
+	result=`/usr/bin/aws s3 cp s3:/$BUCKET/$ENVIRONMENT.json $ENVIRONMENTS_PATH/`
+}
+
 if [ "$UPDATE" == "cookbooks" ]; then
 	update_cookbooks
+	exit 0
+elif [ "$UPDATE" == "environment" ]; then
+	update_environment
 	exit 0
 elif [ "$UPDATE" == "roles" ]; then
 	update_roles
 	exit 0
-elif [ "$UPDATE" == "config" ]; then
-	update_config
+elif [ "$UPDATE" == "client" ]; then
+	update_client
 	exit 0
 elif [ "$UPDATE" == "all" ]; then
+	update_environment
+	update_client
 	update_cookbooks
 	update_roles
-	update_config
 	exit 0
 fi
+
+# Make sure the environment file is present
+if [ ! -e "${ENVIRONMENTS_PATH}/${ENVIRONMENT}.json" ]; then
+	echo "Environment file ${ENVIRONMENTS_PATH}/${ENVIRONMENT}.json not found";
+	exit 1;
 fi
 
 # Run Chef Solo
