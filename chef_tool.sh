@@ -82,14 +82,16 @@ function update_cookbooks() {
 
 # Update Roles
 function update_roles() {
-	mkdir -p $ROLES_PATH
+	sudo mkdir -p $ROLES_PATH
 	if [ -d "${ROLES_PATH}/.git" ]; then
+		echo "Updating roles"
 		cd "${ROLES_PATH}"
 		if ! git pull; then
 			echo "Error updating roles"
 			exit 1
 		fi
 	else
+		echo "Cloning roles"
 		cd "$CHEF_PATH"
 		if ! git clone https://github.com/vanoden/porkchop-roles ${ROLES_PATH}; then
 			echo "Error cloning roles"
@@ -104,7 +106,8 @@ function update_databags() {
 	SOURCE="s3://${BUCKET}/${ENVIRONMENT}/databags/"
 	TARGET="${DATABAGS_PATH}/"
 
-	mkdir -p $DATABAGS_PATH
+	sudo mkdir -p $TARGET
+	echo "Syncing $SOURCE to $TARGET"
 	result=`/usr/bin/aws s3 sync ${SOURCE} ${TARGET}`
 }
 
@@ -125,7 +128,9 @@ function update_client() {
 function update_environment() {
 	SOURCE="s3://${BUCKET}/${ENVIRONMENT}.json"
 	TARGET="${ENVIRONMENTS_PATH}/"
+
 	echo "Copying $SOURCE to $TARGET"
+	sudo mkdir -p $TARGET
 	result=`/usr/bin/aws s3 cp $SOURCE $TARGET`
 }
 
