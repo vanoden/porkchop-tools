@@ -82,7 +82,7 @@ function update_cookbooks() {
 
 # Update Roles
 function update_roles() {
-	sudo mkdir -p $ROLES_PATH
+	mkdir -p $ROLES_PATH
 	if [ -d "${ROLES_PATH}/.git" ]; then
 		echo "Updating roles"
 		cd "${ROLES_PATH}"
@@ -103,10 +103,10 @@ function update_roles() {
 
 # Update Databags
 function update_databags() {
-	SOURCE="s3://${BUCKET}/${ENVIRONMENT}/databags/"
+	SOURCE="s3://${BUCKET}/databags/"
 	TARGET="${DATABAGS_PATH}/"
 
-	sudo mkdir -p $TARGET
+	mkdir -p $TARGET
 	echo "Syncing $SOURCE to $TARGET"
 	result=`/usr/bin/aws s3 sync ${SOURCE} ${TARGET}`
 }
@@ -130,7 +130,7 @@ function update_environment() {
 	TARGET="${ENVIRONMENTS_PATH}/"
 
 	echo "Copying $SOURCE to $TARGET"
-	sudo mkdir -p $TARGET
+	mkdir -p $TARGET
 	result=`/usr/bin/aws s3 cp $SOURCE $TARGET`
 }
 
