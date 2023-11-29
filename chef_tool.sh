@@ -10,7 +10,7 @@ if [ ! -z "$1" ]; then
 	if `echo $PARAM_1|/usr/bin/grep -q -E ^[a-z0-9\\\-_]+\:\:[a-z0-9\\\-_]+$`; then
 		RECIPE=$PARAM_1
 	elif [ "$PARAM_1" == "update" ]; then
-		if `echo $PARAM_2|/usr/bin/grep -q -E "^(cookbooks|roles|environment|client|all)$"`; then
+		if `echo $PARAM_2|/usr/bin/grep -q -E "^(cookbooks|roles|environment|client|data|all)$"`; then
 			UPDATE=$PARAM_2
 		else
 			echo "Unrecognized key for update"
@@ -27,7 +27,7 @@ CHEF_PATH="/etc/chef"
 COOKBOOKS_PATH="$CHEF_PATH/cookbooks"
 ROLES_PATH="$CHEF_PATH/roles"
 ENVIRONMENTS_PATH="$CHEF_PATH/environments"
-DATA_BAGS_PATH="$CHEF_PATH/data_bags"
+DATABAGS_PATH="$CHEF_PATH/data_bags"
 
 ################################################
 ### Get Instance Metadata and validate input ###
@@ -99,13 +99,22 @@ function update_roles() {
 	cd -
 }
 
+# Update Databags
+function update_databags() {
+	SOURCE="s3://${BUCKET}/${ENVIRONMENT}/databags/"
+	TARGET="${DATABAGS_PATH}/"
+
+	mkdir -p $DATABAGS_PATH
+	result=`/usr/bin/aws s3 sync ${SOURCE} ${TARGET}`
+}
+
 # Write Chef Client Config
 function update_client() {
 	cat <<- EOF > /etc/chef/client.rb
 		cookbook_path		'$COOKBOOKS_PATH'
 		role_path			'$ROLES_PATH'
 		environment_path	'$ENVIRONMENTS_PATH'
-		data_bag_path		'$DATA_BAGS_PATH'
+		data_bag_path		'$DATABAGS_PATH'
 
 		environment			'$ENVIRONMENT'
 		log_location		:syslog
@@ -126,6 +135,9 @@ if [ "$UPDATE" == "cookbooks" ]; then
 elif [ "$UPDATE" == "environment" ]; then
 	update_environment
 	exit 0
+elif [ "$UPDATE" == "data" ]; then
+	update_databags
+	exit 0
 elif [ "$UPDATE" == "roles" ]; then
 	update_roles
 	exit 0
@@ -135,6 +147,7 @@ elif [ "$UPDATE" == "client" ]; then
 elif [ "$UPDATE" == "all" ]; then
 	update_environment
 	update_client
+	update_databags
 	update_cookbooks
 	update_roles
 	exit 0
