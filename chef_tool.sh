@@ -2,6 +2,14 @@
 ################################################
 ### Configuration and Input Validation       ###
 ################################################
+# Human or Cron
+if [ -t 0 ]
+then
+	INTERACTIVE=1
+else
+	INTERACTIVE=
+fi
+
 # Handle Input
 if [ ! -z "$1" ]; then
 	PARAM_1=$1
@@ -174,7 +182,7 @@ else
 	PARAMS="${PARAMS} -o $RECIPE"
 fi
 
-if [ -z "$PS1" ]; then
+if [ -z "$INTERACTIVE" ]; then
 	# Automated, Output to Log
 	/bin/chef-solo $PARAMS >> /var/log/chef-solo.log
 else
